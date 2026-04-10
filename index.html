@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>اختبار الأشعة التشخيصية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="70" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            pointer-events: none;
+            animation: moveBackground 20s linear infinite;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(100px, 100px); }
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-screen {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .registration-screen, .exam-screen, .result-screen {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 30px 25px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .registration-screen h1, .exam-screen h1, .result-screen h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .question-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .option:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+
+        .option input {
+            margin-left: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .option span {
+            flex: 1;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .timer {
+            position: sticky;
+            top: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .timer.warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: auto;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .next-btn::after {
+            content: '←';
+            font-size: 20px;
+        }
+
+        .finish-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            width: auto;
+            min-width: 150px;
+        }
+
+        .progress {
+            text-align: center;
+            margin: 20px 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result-screen {
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .registration-screen, .exam-screen, .result-screen, .loading-screen {
+                padding: 20px 15px;
+            }
+
+            .registration-screen h1 {
+                font-size: 22px;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .option span {
+                font-size: 13px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .timer {
+                font-size: 16px;
+                padding: 10px 15px;
+            }
+
+            .next-btn, .finish-btn {
+                min-width: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .option {
+                padding: 10px 12px;
+            }
+
+            .option span {
+                font-size: 12px;
+            }
+
+            .question-text {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loadingScreen" class="loading-screen">
+            <div class="spinner"></div>
+            <h2>جاري تحميل الاختبار...</h2>
+            <p>الرجاء الانتظار قليلاً</p>
+        </div>
+
+        <div id="registrationScreen" class="registration-screen hidden">
+            <h1>📝كوز مادة الاجهزة - B</h1>
+            <p class="subtitle">🌟يجب ان تكون بنفس الكروب 🌟</p>
+            <div class="input-group">
+                <label>👤 الاسم الثلاثي</label>
+                <input type="text" id="studentName" placeholder="مثال: أحمد محمد علي">
+            </div>
+            <button class="btn" onclick="startExam()">🚀 بدء الاختبار</button>
+            <div id="registrationError" class="alert alert-error hidden"></div>
+        </div>
+
+        <div id="examScreen" class="exam-screen hidden">
+            <div class="timer" id="timer">⏱️ الوقت المتبقي: 01:00</div>
+            <div id="questionsContainer"></div>
+            <div class="nav-buttons">
+                <button class="btn next-btn" id="nextBtn" onclick="nextQuestion()">التالي</button>
+            </div>
+        </div>
+
+        <div id="resultScreen" class="result-screen hidden">
+            <div class="success-icon">🎉</div>
+            <h1>تم إكمال الاختبار بنجاح!</h1>
+            <p>شكراً لك على مشاركتك في الاختبار</p>
+            <button class="btn" onclick="location.reload()">🏠 العودة للصفحة الرئيسية</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCHTO1RQst9ts_4SR_Bd4Akb-4VljtNIOs",
+            authDomain: "lunex-jewe.firebaseapp.com",
+            databaseURL: "https://lunex-jewe-default-rtdb.firebaseio.com",
+            projectId: "lunex-jewe",
+            storageBucket: "lunex-jewe.firebasestorage.app",
+            messagingSenderId: "79262821764",
+            appId: "1:79262821764:web:0d71fd001305f23ff0c1d1",
+            measurementId: "G-4Y7V4H809M"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let questions = [];
+        let studentAnswers = [];
+        let currentQuestion = 0;
+        let timeLeft = 60;
+        let timerInterval = null;
+        let studentName = "";
+        
+        async function loadQuestionsFromFirebase() {
+            try {
+                const questionsRef = ref(db, 'questions');
+                const snapshot = await get(questionsRef);
+                
+                if (snapshot.exists()) {
+                    questions = snapshot.val();
+                    console.log('تم تحميل الأسئلة من Firebase:', questions.length);
+                } else {
+                    console.log('لا توجد أسئلة في Firebase، سيتم استخدام الأسئلة الافتراضية');
+                    questions = getDefaultQuestions();
+                    await set(ref(db, 'questions'), questions);
+                }
+                
+                studentAnswers = new Array(questions.length).fill(null);
+                
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('registrationScreen').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('خطأ في تحميل الأسئلة:', error);
+                questions = getDefaultQuestions();
+                studentAnswers = new Array(questions.length).fill(null);
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('registrationScreen').classList.remove('hidden');
+                showError('تم تحميل الأسئلة المحلية بسبب خطأ في الاتصال', 'registrationError');
+            }
+        }
+        
+        function getDefaultQuestions() {
+            return [
+                { text: "The basic principle of X-ray image formation depends on:", options: ["Reflection of X-rays", "Refraction of X-rays", "Differential absorption in tissues", "Magnetic induction"], correct: "C" },
+                { text: "Conventional radiography produces images known as:", options: ["3D reconstructions", "Shadowgrams", "Holograms", "Thermal maps"], correct: "B" },
+                { text: "The operating console allows the technologist to control:", options: ["Patient breathing", "kVp, mA, and exposure time", "Tube color", "Room temperature"], correct: "B" }
+            ];
+        }
+        
+        window.startExam = async function() {
+            const nameInput = document.getElementById('studentName');
+            studentName = nameInput.value.trim();
+            
+            if (!studentName) {
+                showError('⚠️ الرجاء إدخال الاسم الثلاثي كاملاً', 'registrationError');
+                return;
+            }
+            
+            const nameKey = studentName.replace(/\s/g, '_');
+            const studentRef = ref(db, `students/${nameKey}`);
+            
+            try {
+                const snapshot = await get(studentRef);
+                if (snapshot.exists()) {
+                    showError('⚠️ عذراً، لقد قمت بأداء الاختبار مسبقاً. لا يمكنك إعادة الاختبار.', 'registrationError');
+                    return;
+                }
+                
+                document.getElementById('registrationScreen').classList.add('hidden');
+                document.getElementById('examScreen').classList.remove('hidden');
+                startTimer();
+                renderQuestion();
+            } catch (error) {
+                console.error('Error checking student:', error);
+                showError('حدث خطأ في الاتصال بقاعدة البيانات', 'registrationError');
+            }
+        };
+        
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoNextQuestion();
+                } else {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    const timerElement = document.getElementById('timer');
+                    timerElement.textContent = `⏱️ الوقت المتبقي: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    if (timeLeft <= 10) {
+                        timerElement.classList.add('warning');
+                    } else {
+                        timerElement.classList.remove('warning');
+                    }
+                }
+            }, 1000);
+        }
+        
+        function autoNextQuestion() {
+            if (!studentAnswers[currentQuestion]) {
+                studentAnswers[currentQuestion] = null;
+            }
+            
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                resetTimerForQuestion();
+                renderQuestion();
+            } else {
+                finishExam();
+            }
+        }
+        
+        function renderQuestion() {
+            if (!questions || questions.length === 0) return;
+            
+            const q = questions[currentQuestion];
+            let optionsHtml = '';
+            const optionLetters = ['A', 'B', 'C', 'D'];
+            
+            q.options.forEach((opt, idx) => {
+                const letter = optionLetters[idx];
+                const isChecked = studentAnswers[currentQuestion] === letter;
+                optionsHtml += `
+                    <label class="option">
+                        <input type="radio" name="question" value="${letter}" ${isChecked ? 'checked' : ''} onchange="saveAnswer('${letter}')">
+                        <span><strong>${letter})</strong> ${opt}</span>
+                    </label>
+                `;
+            });
+            
+            const percentage = ((currentQuestion + 1) / questions.length) * 100;
+            
+            const questionsContainer = document.getElementById('questionsContainer');
+            questionsContainer.innerHTML = `
+                <div class="question-card">
+                    <div class="question-text">
+                        <span style="color: #667eea;">📌 السؤال ${currentQuestion + 1} من ${questions.length}</span><br>
+                        ${q.text}
+                    </div>
+                    <div class="options">
+                        ${optionsHtml}
+                    </div>
+                </div>
+                <div class="progress">
+                    التقدم: ${currentQuestion + 1} من ${questions.length}
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    ${currentQuestion === questions.length - 1 ? '<button class="btn finish-btn" onclick="finishExam()">🏁 إنهاء الاختبار</button>' : ''}
+                </div>
+            `;
+        }
+        
+        window.saveAnswer = function(answer) {
+            studentAnswers[currentQuestion] = answer;
+        };
+        
+        window.nextQuestion = function() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                resetTimerForQuestion();
+                renderQuestion();
+            }
+        };
+        
+        function resetTimerForQuestion() {
+            clearInterval(timerInterval);
+            timeLeft = 60;
+            startTimer();
+        }
+        
+        window.finishExam = async function() {
+            clearInterval(timerInterval);
+            
+            let score = 0;
+            for (let i = 0; i < questions.length; i++) {
+                if (studentAnswers[i] === questions[i].correct) {
+                    score++;
+                }
+            }
+            
+            const nameKey = studentName.replace(/\s/g, '_');
+            const examData = {
+                name: studentName,
+                score: score,
+                total: questions.length,
+                percentage: ((score / questions.length) * 100).toFixed(2),
+                answers: studentAnswers,
+                timestamp: new Date().toISOString(),
+                completed: true
+            };
+            
+            try {
+                await set(ref(db, `students/${nameKey}`), examData);
+                
+                document.getElementById('examScreen').classList.add('hidden');
+                const resultScreen = document.getElementById('resultScreen');
+                resultScreen.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error saving exam:', error);
+                alert('حدث خطأ في حفظ النتيجة، لكن تم إكمال الاختبار');
+                document.getElementById('examScreen').classList.add('hidden');
+                document.getElementById('resultScreen').classList.remove('hidden');
+            }
+        };
+        
+        function showError(message, elementId) {
+            const errorDiv = document.getElementById(elementId);
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 3000);
+        }
+        
+        loadQuestionsFromFirebase();
+        
+        window.saveAnswer = saveAnswer;
+        window.nextQuestion = nextQuestion;
+        window.finishExam = finishExam;
+        window.startExam = startExam;
+    </script>
+</body>
+</html>
